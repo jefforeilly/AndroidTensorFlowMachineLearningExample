@@ -24,15 +24,34 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ListView;
+import android.widget.EditText;
+import android.text.InputType;
+import android.widget.LinearLayout;
+import android.widget.ArrayAdapter;
 
 import com.flurgle.camerakit.CameraListener;
 import com.flurgle.camerakit.CameraView;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.io.UnsupportedEncodingException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -45,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String MODEL_FILE = "file:///android_asset/tensorflow_inception_graph.pb";
     private static final String LABEL_FILE =
             "file:///android_asset/imagenet_comp_graph_label_strings.txt";
+    private static final String DEFAULT_TARGET_URL = "http://192.168.50.100:8070/tunnel/192.168.50.100:51000/";
 
     private Classifier classifier;
     private Executor executor = Executors.newSingleThreadExecutor();
@@ -86,11 +106,11 @@ public class MainActivity extends AppCompatActivity {
                 final CharSequence[] items = new CharSequence[results.size()];
                 int i = 0;
                 for (Classifier.Recognition result : results) {
-                    items[i] = result.toString();
+                    items[i] = result.getTitle();
                     i++;
                 }
 
-                getParentView().showAlertDialog(items);
+                getParentView().showAlertDialog(items, picture);
             }
         });
 
@@ -158,13 +178,34 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void showAlertDialog(final CharSequence[] items) {
+    private void showAlertDialog(final CharSequence[] items, final byte[] picture) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+        // Setup user choice
+        final EditText userInputChoice = new EditText(this);
+        userInputChoice.setHint("If no other options match the picture");
+        userInputChoice.setInputType(InputType.TYPE_CLASS_TEXT);
+        layout.addView(userInputChoice);
+
+        // Set up the input
+        final EditText inputUrl = new EditText(this);
+        inputUrl.setText(MainActivity.DEFAULT_TARGET_URL);
+        inputUrl.setInputType(InputType.TYPE_CLASS_TEXT);
+        layout.addView(inputUrl);
+
+        builder.setView(layout);
+
 
         builder.setSingleChoiceItems(items, 0, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {}
         });
+        builder.setTitle("Choose correct option and enter url to send to:");
+
+
 
         // Set the neutral/cancel button click listener
         builder.setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
@@ -176,13 +217,26 @@ public class MainActivity extends AppCompatActivity {
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                String choisenDescription;
 
-                // Do something when click positive button
+                // Get data from dialog
                 ListView lw = ((AlertDialog)dialog).getListView();
                 CharSequence checkedItem = (CharSequence)lw.getAdapter().getItem(lw.getCheckedItemPosition());
-                Toast.makeText(getApplicationContext(),
-                        checkedItem + " chosen. " +
-                                "Sending choice to server.", Toast.LENGTH_LONG).show();
+                choisenDescription = (String)checkedItem;
+
+                String urlString = inputUrl.getText().toString();
+                String inputChoice = userInputChoice.getText().toString();
+
+                if (!inputChoice.equals("")) {
+                    choisenDescription = inputChoice;
+                }
+
+                Toast.makeText(getApplicationContext(), "\"" +
+                        choisenDescription + "\"" + " chosen. " +
+                                "Sending choice to server: " + urlString, Toast.LENGTH_LONG).show();
+
+                // send request
+                sendRequest(urlString, choisenDescription, picture);
             }
         });
 
@@ -190,5 +244,41 @@ public class MainActivity extends AppCompatActivity {
 
         // Display the alert dialog on interface
         dialog.show();
+    }
+
+    private void sendRequest(String urlString, final String description, final byte[] picture) {
+        // Instantiate the RequestQueue.
+        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
+
+        // Request a string response from the provided URL.
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, urlString,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        // Display the response string.
+                        System.out.println("Successful");
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                System.out.println("That didn't work! " + error);
+            }
+        }) {
+            @Override
+            public byte[] getBody() throws AuthFailureError {
+                return picture;
+            }
+
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String>  params = new HashMap<>();
+                params.put("description", description);
+
+                return params;
+            }
+        };
+
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest);
     }
 }
