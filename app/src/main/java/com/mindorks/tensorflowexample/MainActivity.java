@@ -22,7 +22,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -47,9 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Classifier classifier;
     private Executor executor = Executors.newSingleThreadExecutor();
-    private TextView textViewResult;
-    private Button btnDetectObject, btnToggleCamera;
-    private ImageView imageViewResult;
+    private ImageButton btnDetectObject;
     private CameraView cameraView;
 
     @Override
@@ -57,12 +55,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         cameraView = (CameraView) findViewById(R.id.cameraView);
-        imageViewResult = (ImageView) findViewById(R.id.imageViewResult);
-        textViewResult = (TextView) findViewById(R.id.textViewResult);
-        textViewResult.setMovementMethod(new ScrollingMovementMethod());
-
-        btnToggleCamera = (Button) findViewById(R.id.btnToggleCamera);
-        btnDetectObject = (Button) findViewById(R.id.btnDetectObject);
+        btnDetectObject = (ImageButton) findViewById(R.id.btnDetectObject);
 
         cameraView.setCameraListener(new CameraListener() {
             @Override
@@ -73,18 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
                 bitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
 
-                imageViewResult.setImageBitmap(bitmap);
-
                 final List<Classifier.Recognition> results = classifier.recognizeImage(bitmap);
-
-                textViewResult.setText(results.toString());
-            }
-        });
-
-        btnToggleCamera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                cameraView.toggleFacing();
             }
         });
 
