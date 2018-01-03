@@ -16,15 +16,16 @@
 
 package com.mindorks.tensorflowexample;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ListView;
 
 import com.flurgle.camerakit.CameraListener;
 import com.flurgle.camerakit.CameraView;
@@ -51,13 +52,27 @@ public class MainActivity extends AppCompatActivity {
     private CameraView cameraView;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         cameraView = (CameraView) findViewById(R.id.cameraView);
         btnDetectObject = (ImageButton) findViewById(R.id.btnDetectObject);
 
-        cameraView.setCameraListener(new CameraListener() {
+        // An extended camera listener to pass the parent view inside
+        class ExtendedCameraListener extends CameraListener {
+            private MainActivity parentView;
+
+            public ExtendedCameraListener(MainActivity parentView) {
+                this.parentView = parentView;
+            }
+
+            public MainActivity getParentView() {
+                return parentView;
+            }
+        }
+
+        cameraView.setCameraListener(new ExtendedCameraListener(this) {
+
             @Override
             public void onPictureTaken(byte[] picture) {
                 super.onPictureTaken(picture);
@@ -67,6 +82,15 @@ public class MainActivity extends AppCompatActivity {
                 bitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
 
                 final List<Classifier.Recognition> results = classifier.recognizeImage(bitmap);
+
+                final CharSequence[] items = new CharSequence[results.size()];
+                int i = 0;
+                for (Classifier.Recognition result : results) {
+                    items[i] = result.toString();
+                    i++;
+                }
+
+                getParentView().showAlertDialog(items);
             }
         });
 
@@ -132,5 +156,39 @@ public class MainActivity extends AppCompatActivity {
                 btnDetectObject.setVisibility(View.VISIBLE);
             }
         });
+    }
+
+    private void showAlertDialog(final CharSequence[] items) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setSingleChoiceItems(items, 0, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {}
+        });
+
+        // Set the neutral/cancel button click listener
+        builder.setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {}
+        });
+
+        // Set the positive/yes button click listener
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                // Do something when click positive button
+                ListView lw = ((AlertDialog)dialog).getListView();
+                CharSequence checkedItem = (CharSequence)lw.getAdapter().getItem(lw.getCheckedItemPosition());
+                Toast.makeText(getApplicationContext(),
+                        checkedItem + " chosen. " +
+                                "Sending choice to server.", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+
+        // Display the alert dialog on interface
+        dialog.show();
     }
 }
