@@ -85,12 +85,8 @@ public interface Classifier {
         @Override
         public String toString() {
             String resultString = "";
-            if (id != null) {
-                resultString += id + " ";
-            }
-
             if (title != null) {
-                resultString += title + " ";
+                resultString += title + "_";
             }
 
             if (confidence != null) {
@@ -98,7 +94,7 @@ public interface Classifier {
             }
 
             if (location != null) {
-                resultString += location + " ";
+                resultString += location + "_";
             }
 
             return resultString.trim();
