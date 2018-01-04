@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String MODEL_FILE = "file:///android_asset/tensorflow_inception_graph.pb";
     private static final String LABEL_FILE =
             "file:///android_asset/imagenet_comp_graph_label_strings.txt";
-    private static final String DEFAULT_TARGET_URL = "http://192.168.50.100:8070/tunnel/192.168.50.100:51000/";
+    private static final String DEFAULT_TARGET_URL = "http://192.168.50.100:8070/tunnel/192.168.50.100:45000/";
 
     private Classifier classifier;
     private Executor executor = Executors.newSingleThreadExecutor();
