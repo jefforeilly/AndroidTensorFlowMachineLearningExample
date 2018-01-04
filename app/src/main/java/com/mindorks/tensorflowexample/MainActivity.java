@@ -25,18 +25,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ListView;
 import android.widget.EditText;
 import android.text.InputType;
 import android.widget.LinearLayout;
-import android.widget.ArrayAdapter;
 
 import com.flurgle.camerakit.CameraListener;
 import com.flurgle.camerakit.CameraView;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -46,14 +43,11 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.io.UnsupportedEncodingException;
-import java.sql.Timestamp;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -122,13 +116,6 @@ public class MainActivity extends AppCompatActivity {
                 bitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
 
                 final List<Classifier.Recognition> results = classifier.recognizeImage(bitmap);
-
-//                final Classifier.Recognition[] items = new Classifier.Recognition[results.size()];
-//                int i = 0;
-//                for (Classifier.Recognition result : results) {
-//                    items[i] = result;
-//                    i++;
-//                }
 
                 getParentView().showAlertDialog(results, picture);
             }
@@ -259,7 +246,7 @@ public class MainActivity extends AppCompatActivity {
                                 "Sending choice to server: " + urlString, Toast.LENGTH_LONG).show();
 
                 String[] splitDescription = chosenDescription.split("_");
-                ObjectDescription objectDescription = null;
+                ObjectDescription objectDescription;
                 if (splitDescription.length > 1) {
                     objectDescription = new ObjectDescription(splitDescription[0], splitDescription[1]);
                 } else {
@@ -304,7 +291,6 @@ public class MainActivity extends AppCompatActivity {
             public Map<String, String> getHeaders() {
                 Map<String, String>  params = new HashMap<>();
                 params.put("name", objDesc.getName().replace(" ", "_"));
-                params.put("confidence", objDesc.getConfidence().replace(" ", "_"));
 
                 return params;
             }
